@@ -1,0 +1,85 @@
+# Grafana deployment with Prometheus integration
+
+resource "helm_release" "grafana" {
+  name       = "grafana"
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "grafana"
+  version    = "9.4.5"
+  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+
+  values = [
+    yamlencode({
+      # Persistence for dashboards and configuration
+      persistence = {
+        enabled = true
+        size    = "5Gi"
+      }
+
+      # Admin credentials
+      adminUser     = "admin"
+      adminPassword = "admin123"
+
+      # Service configuration
+      service = {
+        type = "ClusterIP"
+        port = 80
+      }
+
+      # Data sources configuration
+      datasources = {
+        "datasources.yaml" = {
+          apiVersion = 1
+          datasources = [
+            {
+              name      = "Prometheus"
+              type      = "prometheus"
+              url       = "http://prometheus-kube-prometheus-prometheus.${kubernetes_namespace.monitoring.metadata[0].name}.svc.cluster.local:9090"
+              access    = "proxy"
+              isDefault = true
+            }
+          ]
+        }
+      }
+
+      # Basic dashboards
+      dashboardProviders = {
+        "dashboardproviders.yaml" = {
+          apiVersion = 1
+          providers = [
+            {
+              name            = "default"
+              orgId           = 1
+              folder          = ""
+              type            = "file"
+              disableDeletion = false
+              editable        = true
+              options = {
+                path = "/var/lib/grafana/dashboards/default"
+              }
+            }
+          ]
+        }
+      }
+
+      # Resource limits
+      resources = {
+        requests = {
+          memory = "256Mi"
+          cpu    = "100m"
+        }
+        limits = {
+          memory = "512Mi"
+          cpu    = "200m"
+        }
+      }
+    })
+  ]
+
+  depends_on = [
+    kubernetes_namespace.monitoring,
+    helm_release.prometheus
+  ]
+
+  timeout = 300
+  wait    = true
+}
