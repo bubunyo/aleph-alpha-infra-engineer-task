@@ -15,8 +15,9 @@ resource "helm_release" "grafana" {
         size    = "5Gi"
       }
 
+
       # Admin credentials
-      adminUser     = "admin"
+      adminUser = "admin"
       adminPassword = "admin123"
 
       # Service configuration
@@ -36,6 +37,12 @@ resource "helm_release" "grafana" {
               url       = "http://prometheus-kube-prometheus-prometheus.${kubernetes_namespace.monitoring.metadata[0].name}.svc.cluster.local:9090"
               access    = "proxy"
               isDefault = true
+            },
+            {
+              name   = "Loki"
+              type   = "loki"
+              url    = "http://loki.${kubernetes_namespace.logging.metadata[0].name}.svc.cluster.local:3100"
+              access = "proxy"
             }
           ]
         }
@@ -46,17 +53,17 @@ resource "helm_release" "grafana" {
         "dashboardproviders.yaml" = {
           apiVersion = 1
           providers = [
-            {
-              name            = "default"
-              orgId           = 1
-              folder          = ""
-              type            = "file"
-              disableDeletion = false
-              editable        = true
-              options = {
-                path = "/var/lib/grafana/dashboards/default"
-              }
-            }
+            #             {
+            #               name            = "default"
+            #               orgId           = 1
+            #               folder          = ""
+            #               type            = "file"
+            #               disableDeletion = false
+            #               editable        = true
+            #               options = {
+            #                 path = "/var/lib/grafana/dashboards/default"
+            #               }
+            #             }
           ]
         }
       }
@@ -77,7 +84,9 @@ resource "helm_release" "grafana" {
 
   depends_on = [
     kubernetes_namespace.monitoring,
-    helm_release.prometheus
+    kubernetes_namespace.logging,
+    helm_release.prometheus,
+    helm_release.loki
   ]
 
   timeout = 300

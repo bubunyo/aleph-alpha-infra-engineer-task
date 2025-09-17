@@ -43,3 +43,13 @@ resource "kubernetes_namespace" "database" {
     }
   }
 }
+resource "kubernetes_namespace" "cluster_management" {
+  metadata {
+    name = "cluster-management"
+    labels = {
+      name       = "kube-dashboard"
+      purpose    = "cluster-management"
+      managed-by = "terraform"
+    }
+  }
+}
