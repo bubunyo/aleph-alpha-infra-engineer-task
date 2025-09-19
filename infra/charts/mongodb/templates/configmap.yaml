@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mongodb.fullname" . }}-init
+  labels:
+    {{- include "mongodb.labels" . | nindent 4 }}
+data:
+  init-mongo.js: |
+    // Create application user for guestbook
+    db = db.getSiblingDB(process.env.MONGODB_DATABASE);
+    
+    db.createUser({
+      user: process.env.MONGODB_USERNAME,
+      pwd: process.env.MONGODB_PASSWORD,
+      roles: [
+        {
+          role: "readWrite",
+          db: process.env.MONGODB_DATABASE
+        }
+      ]
+    });
+    
+    print("Created user: " + process.env.MONGODB_USERNAME + " for database: " + process.env.MONGODB_DATABASE);
