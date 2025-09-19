@@ -1,0 +1,39 @@
+# Default values for mongodb chart
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: mongo
+  tag: "4.4"
+  pullPolicy: IfNotPresent
+
+auth:
+  enabled: true
+  existingSecret: ""
+  rootUsernameKey: "mongodb-root-username"
+  rootPasswordKey: "mongodb-root-password"
+  usernameKey: "mongodb-username"
+  passwordKey: "mongodb-password"
+  databaseKey: "mongodb-database"
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 5Gi
+
+service:
+  type: ClusterIP
+  port: 27017
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "200m"
+
+nodeSelector: { }
+tolerations: [ ]
+affinity: { }

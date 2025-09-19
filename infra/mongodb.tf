@@ -1,24 +1,16 @@
-# MongoDB deployment as StatefulSet for guestbook backend
+# MongoDB deployment using custom Helm chart as StatefulSet
 
 resource "helm_release" "mongodb" {
-  name       = "mongodb"
-  repository = "bitnami"
-  chart      = "mongodb"
-  version    = "16.5.44"
-  namespace  = kubernetes_namespace.database.metadata[0].name
+  name      = "mongodb"
+  chart     = "./charts/mongodb"
+  namespace = kubernetes_namespace.database.metadata[0].name
 
   values = [
     yamlencode({
-      # Minimal StatefulSet configuration
-      architecture = "standalone"
-
-      # Authentication using Kubernetes Secret
+      # Authentication using existing Kubernetes Secret
       auth = {
         enabled        = true
         existingSecret = kubernetes_secret.mongodb_auth.metadata[0].name
-        usernames = [var.mongodb_username]
-        passwords = [var.mongodb_password]
-        databases = [var.mongodb_database]
       }
 
       # Persistence for data
@@ -30,34 +22,7 @@ resource "helm_release" "mongodb" {
       # Service configuration
       service = {
         type = "ClusterIP"
-        ports = {
-          mongodb = 27017
-        }
-      }
-
-      metrics = {
-        enabled = true
-        prometheusRule = {
-          enabled = true
-          rules = [
-            #             {
-            #               name = "rule1"
-            #               rules = [
-            #                 {
-            #                   alert = "HighRequestLatency"
-            #                   expr  = "job:request_latency_seconds:mean5m{job=\"myjob\"} > 0.5"
-            #                   for   = "10m"
-            #                   labels = {
-            #                     severity = "page"
-            #                   }
-            #                   annotations = {
-            #                     summary = "High request latency"
-            #                   }
-            #                 }
-            #               ]
-            #             }
-          ]
-        }
+        port = 27017
       }
 
       # Resource limits (minimal)

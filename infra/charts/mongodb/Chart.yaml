@@ -1,0 +1,15 @@
+apiVersion: v2
+name: mongodb
+description: A custom MongoDB Helm chart for the guestbook application
+type: application
+version: 0.1.0
+appVersion: "4.4"
+keywords:
+  - mongodb
+  - database
+  - nosql
+home: https://github.com/mongodb/mongo
+sources:
+  - https://github.com/mongodb/mongo
+maintainers:
+  - name: Guestbook Team

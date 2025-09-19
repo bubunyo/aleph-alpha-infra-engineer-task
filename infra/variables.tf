@@ -11,10 +11,15 @@ variable "registry_name" {
 }
 
 # Database secrets
-variable "mongodb_root_password" {
-  description = "MongoDB application username"
+variable "mongodb_root_username" {
+  description = "MongoDB application root username"
   type        = string
-  default     = "root5678"
+  default     = "admin"
+}
+variable "mongodb_root_password" {
+  description = "MongoDB application root password"
+  type        = string
+  default     = "admin5678"
 }
 
 variable "mongodb_username" {

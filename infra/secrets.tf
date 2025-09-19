@@ -12,9 +12,11 @@ resource "kubernetes_secret" "mongodb_auth" {
   }
 
   data = {
+    mongodb-root-username = base64encode(var.mongodb_root_username)
     mongodb-root-password = base64encode(var.mongodb_root_password)
-    mongodb-users = base64encode(var.mongodb_username)
-    mongodb-passwords = base64encode(var.mongodb_password)
+    mongodb-username = base64encode(var.mongodb_username)
+    mongodb-password = base64encode(var.mongodb_password)
+    mongodb-database = base64encode(var.mongodb_database)
   }
 
   type = "Opaque"
