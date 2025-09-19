@@ -1,0 +1,62 @@
+# Default values for guestbook-backend
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: python-guestbook-backend
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+env:
+  port: "8080"
+  guestbookDbAddr: "mongodb.database.svc.cluster.local:27017"
+
+# MongoDB connection secret
+mongodb:
+  existingSecret: ""
+  usernameKey: "mongodb-username"
+  passwordKey: "mongodb-password"
+  databaseKey: "mongodb-database"
+
+# Init container to wait for MongoDB
+initContainer:
+  enabled: true
+  image:
+    repository: mongo
+    tag: "4.4"
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "50m"
+  limits:
+    memory: "256Mi"
+    cpu: "100m"
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Health checks
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5

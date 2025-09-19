@@ -1,0 +1,15 @@
+apiVersion: v2
+name: guestbook-backend
+description: Guestbook Backend API Service
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - guestbook
+  - backend
+  - api
+  - python
+  - flask
+home: https://github.com/aleph-alpha/guestbook
+maintainers:
+  - name: Guestbook Team

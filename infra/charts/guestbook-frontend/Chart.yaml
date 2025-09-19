@@ -1,0 +1,15 @@
+apiVersion: v2
+name: guestbook-frontend
+description: Guestbook Frontend Web Application
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - guestbook
+  - frontend
+  - web
+  - python
+  - flask
+home: https://github.com/aleph-alpha/guestbook
+maintainers:
+  - name: Guestbook Team
