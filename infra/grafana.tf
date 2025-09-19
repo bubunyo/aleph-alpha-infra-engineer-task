@@ -11,14 +11,18 @@ resource "helm_release" "grafana" {
     yamlencode({
       # Persistence for dashboards and configuration
       persistence = {
+        type    = "sts"
         enabled = true
         size    = "5Gi"
       }
 
 
-      # Admin credentials
-      adminUser = "admin"
-      adminPassword = "admin123"
+      # Admin credentials using Kubernetes Secret
+      admin = {
+        existingSecret = kubernetes_secret.grafana_auth.metadata[0].name
+        userKey        = "admin-user"
+        passwordKey    = "admin-password"
+      }
 
       # Service configuration
       service = {
@@ -86,7 +90,8 @@ resource "helm_release" "grafana" {
     kubernetes_namespace.monitoring,
     kubernetes_namespace.logging,
     helm_release.prometheus,
-    helm_release.loki
+    helm_release.loki,
+    kubernetes_secret.grafana_auth
   ]
 
   timeout = 300
