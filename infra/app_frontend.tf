@@ -11,6 +11,7 @@ resource "helm_release" "guestbook_frontend" {
       image = {
         repository = "localhost:5000/python-guestbook-frontend"
         tag        = "latest"
+        pullPolicy = "Always"
       }
 
       # Service configuration
@@ -21,7 +22,7 @@ resource "helm_release" "guestbook_frontend" {
 
       # Environment variables
       env = {
-        port              = "8080"
+        port             = "8080"
         guestbookApiAddr = "guestbook-backend.${kubernetes_namespace.application.metadata[0].name}.svc.cluster.local:8080"
       }
 
