@@ -47,3 +47,40 @@ resource "helm_release" "prometheus" {
   wait          = true
   wait_for_jobs = true
 }
+
+# Prometheus Ingress for external access on prometheus.localhost
+resource "kubernetes_ingress_v1" "prometheus" {
+  metadata {
+    name      = "prometheus"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    annotations = {
+      "nginx.ingress.kubernetes.io/rewrite-target" = "/"
+    }
+  }
+
+  spec {
+    ingress_class_name = "nginx"
+    
+    rule {
+      host = "prometheus.localhost"
+      http {
+        path {
+          path      = "/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = "prometheus-kube-prometheus-prometheus"
+              port {
+                number = 9090
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    helm_release.prometheus
+  ]
+}
