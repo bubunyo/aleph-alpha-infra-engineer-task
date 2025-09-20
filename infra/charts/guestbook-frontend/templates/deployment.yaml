@@ -13,6 +13,12 @@ spec:
     metadata:
       labels:
         {{- include "guestbook-frontend.selectorLabels" . | nindent 8 }}
+      {{- if .Values.metrics.enabled }}
+      annotations:
+        {{- range $key, $value := .Values.metrics.annotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
     spec:
       containers:
         - name: frontend

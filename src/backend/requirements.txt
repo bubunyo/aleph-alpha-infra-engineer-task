@@ -3,3 +3,5 @@ Werkzeug==2.2.2
 Flask-PyMongo==2.3.0
 bleach==4.1.0
 ptvsd==4.3.2 # Required for debugging.
+psutil==5.9.0 # Required for system metrics.
+prometheus_client==0.15.0 # Required for Prometheus metrics.

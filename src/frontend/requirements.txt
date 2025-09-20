@@ -3,3 +3,5 @@ Werkzeug==2.2.2
 requests==2.27.1
 python-dateutil==2.8.2
 ptvsd==4.3.2 # Required for debugging.
+psutil==5.9.0 # Required for system metrics.
+prometheus_client==0.15.0 # Required for Prometheus metrics.

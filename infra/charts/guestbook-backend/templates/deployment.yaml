@@ -13,6 +13,12 @@ spec:
     metadata:
       labels:
         {{- include "guestbook-backend.selectorLabels" . | nindent 8 }}
+      {{- if .Values.metrics.enabled }}
+      annotations:
+        {{- range $key, $value := .Values.metrics.annotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
     spec:
       {{- if .Values.initContainer.enabled }}
       initContainers:
