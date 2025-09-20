@@ -9,7 +9,7 @@ resource "kubernetes_secret" "mongodb_auth" {
 
 
   metadata {
-    name      = "mongodb-auth-v2"
+    name      = "mongodb-auth"
     namespace = each.value
     labels = {
       app        = each.key
@@ -18,11 +18,12 @@ resource "kubernetes_secret" "mongodb_auth" {
   }
 
   data = {
-    mongodb-root-username = base64encode(var.mongodb_root_username)
-    mongodb-root-password = base64encode(var.mongodb_root_password)
-    mongodb-username = base64encode(var.mongodb_username)
-    mongodb-password = base64encode(var.mongodb_password)
-    mongodb-database = base64encode(var.mongodb_database)
+    mongodb-root-username = var.mongodb_root_username
+    mongodb-root-password = var.mongodb_root_password
+    mongodb-username      = var.mongodb_username
+    mongodb-password      = var.mongodb_password
+    mongodb-database      = var.mongodb_database
+    mongodb-connection = "${var.mongodb_username}:${var.mongodb_password}@mongodb.${local.mongodb_ns}.svc.cluster.local:${local.mongodb_cluster_port}"
   }
 
   type = "Opaque"
@@ -40,8 +41,8 @@ resource "kubernetes_secret" "grafana_auth" {
   }
 
   data = {
-    admin-user = base64encode(var.grafana_admin_username)
-    admin-password = base64encode(var.grafana_admin_password)
+    admin-user     = var.grafana_admin_username
+    admin-password = var.grafana_admin_password
   }
 
   type = "Opaque"

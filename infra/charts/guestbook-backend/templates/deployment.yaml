@@ -34,9 +34,12 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.env.port | quote }}
-            - name: GUESTBOOK_DB_ADDR
-              value: {{ .Values.env.guestbookDbAddr | quote }}
             {{- if .Values.mongodb.existingSecret }}
+            - name: GUESTBOOK_DB_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.existingSecret }}
+                  key: {{ .Values.mongodb.connectionKey }}
             - name: MONGODB_USERNAME
               valueFrom:
                 secretKeyRef:

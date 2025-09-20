@@ -74,3 +74,4 @@ generated/
 
 .docker_sock
 aa-cluster-config
+.venv

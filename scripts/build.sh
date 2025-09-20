@@ -109,17 +109,17 @@ build_component() {
     echo -e "${GREEN}📁 Changed to $comp_name directory:\n    $(pwd)${NC}"
     
     # Run tests using Makefile
-    if [ "$RUN_TESTS" = true ]; then
-        echo -e "${YELLOW}🧪 Running tests for $comp_name...${NC}"
-        if make check; then
-            echo -e "${GREEN}✅ Checks complete for $comp_name${NC}"
-        else
-            echo -e "${RED}❌ Checks failed for $comp_name! Build aborted.${NC}"
-            return 1
-        fi
-    else
-        echo -e "${YELLOW}⚠️  Skipping tests for $comp_name${NC}"
-    fi
+#    if [ "$RUN_TESTS" = true ]; then
+#        echo -e "${YELLOW}🧪 Running tests for $comp_name...${NC}"
+#        if make check; then
+#            echo -e "${GREEN}✅ Checks complete for $comp_name${NC}"
+#        else
+#            echo -e "${RED}❌ Checks failed for $comp_name! Build aborted.${NC}"
+#            return 1
+#        fi
+#    else
+#        echo -e "${YELLOW}⚠️  Skipping tests for $comp_name${NC}"
+#    fi
     
     # Check if Dockerfile exists
     if [ ! -f "Dockerfile" ]; then

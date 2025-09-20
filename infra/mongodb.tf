@@ -1,9 +1,14 @@
 # MongoDB deployment using custom Helm chart as StatefulSet
 
+locals {
+  mongodb_cluster_port = 27017
+  mongodb_ns           = kubernetes_namespace.database.metadata[0].name
+}
+
 resource "helm_release" "mongodb" {
   name      = "mongodb"
   chart     = "./charts/mongodb"
-  namespace = kubernetes_namespace.database.metadata[0].name
+  namespace = local.mongodb_ns
 
   values = [
     yamlencode({
@@ -22,7 +27,7 @@ resource "helm_release" "mongodb" {
       # Service configuration
       service = {
         type = "ClusterIP"
-        port = 27017
+        port = local.mongodb_cluster_port
       }
 
       # Resource limits (minimal)

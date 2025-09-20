@@ -10,7 +10,8 @@ resource "helm_release" "guestbook_backend" {
       # Image configuration
       image = {
         repository = "localhost:5000/python-guestbook-backend"
-        tag        = "7fdc2fe"
+        tag        = "latest"
+        pullPolicy = "Always"
       }
 
       # Service configuration
@@ -21,8 +22,7 @@ resource "helm_release" "guestbook_backend" {
 
       # Environment variables
       env = {
-        port            = "8080"
-        guestbookDbAddr = "mongodb.${kubernetes_namespace.database.metadata[0].name}.svc.cluster.local:27017"
+        port = "8080"
       }
 
       # MongoDB connection using existing secret

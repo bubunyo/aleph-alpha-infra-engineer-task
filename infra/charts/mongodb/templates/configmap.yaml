@@ -5,19 +5,25 @@ metadata:
   labels:
     {{- include "mongodb.labels" . | nindent 4 }}
 data:
-  init-mongo.js: |
-    // Create application user for guestbook
-    db = db.getSiblingDB(process.env.MONGODB_DATABASE);
+  init-mongo.sh: |
+    #!/bin/bash
+    set -e
     
+    mongo <<EOF
+    use admin
+    db.auth('$MONGO_INITDB_ROOT_USERNAME', '$MONGO_INITDB_ROOT_PASSWORD')
+    
+    use $MONGODB_DATABASE
     db.createUser({
-      user: process.env.MONGODB_USERNAME,
-      pwd: process.env.MONGODB_PASSWORD,
+      user: '$MONGODB_USERNAME',
+      pwd: '$MONGODB_PASSWORD',
       roles: [
         {
-          role: "readWrite",
-          db: process.env.MONGODB_DATABASE
+          role: 'readWrite',
+          db: '$MONGODB_DATABASE'
         }
       ]
-    });
+    })
     
-    print("Created user: " + process.env.MONGODB_USERNAME + " for database: " + process.env.MONGODB_DATABASE);
+    print('Created user: ' + '$MONGODB_USERNAME' + ' for database: ' + '$MONGODB_DATABASE')
+    EOF

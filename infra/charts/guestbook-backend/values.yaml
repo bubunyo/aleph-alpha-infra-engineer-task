@@ -16,7 +16,6 @@ service:
 
 env:
   port: "8080"
-  guestbookDbAddr: "mongodb.database.svc.cluster.local:27017"
 
 # MongoDB connection secret
 mongodb:
@@ -24,6 +23,7 @@ mongodb:
   usernameKey: "mongodb-username"
   passwordKey: "mongodb-password"
   databaseKey: "mongodb-database"
+  connectionKey: "mongodb-connection"
 
 resources:
   requests:
@@ -33,9 +33,9 @@ resources:
     memory: "256Mi"
     cpu: "100m"
 
-nodeSelector: {}
-tolerations: []
-affinity: {}
+nodeSelector: { }
+tolerations: [ ]
+affinity: { }
 
 # Health checks
 livenessProbe:
