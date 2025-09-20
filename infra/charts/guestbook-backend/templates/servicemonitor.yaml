@@ -1,0 +1,22 @@
+{{- if .Values.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "guestbook-backend.fullname" . }}
+  labels:
+    {{- include "guestbook-backend.labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.metrics.serviceMonitor.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "guestbook-backend.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: {{ .Values.metrics.serviceMonitor.endpoint.port }}
+      path: {{ .Values.metrics.serviceMonitor.endpoint.path }}
+      interval: {{ .Values.metrics.serviceMonitor.endpoint.interval }}
+      {{- if .Values.metrics.serviceMonitor.endpoint.scrapeTimeout }}
+      scrapeTimeout: {{ .Values.metrics.serviceMonitor.endpoint.scrapeTimeout }}
+      {{- end }}
+{{- end }}
