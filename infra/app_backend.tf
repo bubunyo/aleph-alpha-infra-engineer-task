@@ -51,12 +51,47 @@ resource "helm_release" "guestbook_backend" {
         }
       }
 
-      # Health checks (disable for now - will need to implement endpoints)
+      # Health checks
       livenessProbe = {
-        enabled = false
+        enabled = true
+        httpGet = {
+          path = "/health"
+          port = 8080
+        }
+        initialDelaySeconds = 30
+        periodSeconds = 10
       }
+      
       readinessProbe = {
-        enabled = false
+        enabled = true
+        httpGet = {
+          path = "/ready"
+          port = 8080
+        }
+        initialDelaySeconds = 5
+        periodSeconds = 5
+      }
+
+      # Metrics configuration
+      metrics = {
+        enabled = true
+        serviceMonitor = {
+          enabled = true
+          labels = {
+            release = "prometheus"
+          }
+          endpoint = {
+            port = "http"
+            path = "/metrics"
+            interval = "30s"
+            scrapeTimeout = "10s"
+          }
+        }
+        annotations = {
+          "prometheus.io/scrape" = "true"
+          "prometheus.io/path" = "/metrics"
+          "prometheus.io/port" = "8080"
+        }
       }
     })
   ]

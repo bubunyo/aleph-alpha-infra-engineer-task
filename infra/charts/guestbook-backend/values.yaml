@@ -63,3 +63,14 @@ metrics:
     prometheus.io/scrape: "true"
     prometheus.io/path: /metrics
     prometheus.io/port: "8080"
+  
+  # ServiceMonitor configuration for Prometheus Operator
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: prometheus  # Required for Prometheus discovery
+    endpoint:
+      port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s

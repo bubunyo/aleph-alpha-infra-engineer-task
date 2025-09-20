@@ -117,7 +117,7 @@ def readiness_check():
     try:
         # Test backend connection
         response = requests.get(app.config["BACKEND_URI"], timeout=3)
-        if response.status_code == 200:
+        if response.status_code == 201:
             return jsonify({"status": "ready", "backend": "connected"}), 200
         else:
             return jsonify({"status": "not ready", "backend": "error", "status_code": response.status_code}), 503
