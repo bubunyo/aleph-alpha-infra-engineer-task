@@ -10,7 +10,7 @@ resource "helm_release" "guestbook_backend" {
       # Image configuration
       image = {
         repository = "localhost:5000/python-guestbook-backend"
-        tag        = "latest"
+        tag        = "7fdc2fe"
       }
 
       # Service configuration
@@ -27,7 +27,7 @@ resource "helm_release" "guestbook_backend" {
 
       # MongoDB connection using existing secret
       mongodb = {
-        existingSecret = kubernetes_secret.mongodb_auth.metadata[0].name
+        existingSecret = kubernetes_secret.mongodb_auth_app.metadata[0].name
       }
 
       # Resource limits (minimal)
@@ -54,7 +54,7 @@ resource "helm_release" "guestbook_backend" {
 
   depends_on = [
     kubernetes_namespace.application,
-    kubernetes_secret.mongodb_auth,
+    kubernetes_secret.mongodb_auth_app,
     helm_release.mongodb
   ]
 
