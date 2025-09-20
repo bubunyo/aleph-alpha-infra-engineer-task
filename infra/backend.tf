@@ -27,7 +27,16 @@ resource "helm_release" "guestbook_backend" {
 
       # MongoDB connection using existing secret
       mongodb = {
-        existingSecret = kubernetes_secret.mongodb_auth_app.metadata[0].name
+        existingSecret = kubernetes_secret.mongodb_auth["app"].metadata[0].name
+      }
+
+      # Init container to wait for MongoDB
+      initContainer = {
+        enabled = true
+        image = {
+          repository = "mongo"
+          tag        = "4.4"
+        }
       }
 
       # Resource limits (minimal)
@@ -54,7 +63,7 @@ resource "helm_release" "guestbook_backend" {
 
   depends_on = [
     kubernetes_namespace.application,
-    kubernetes_secret.mongodb_auth_app,
+    kubernetes_secret.mongodb_auth,
     helm_release.mongodb
   ]
 

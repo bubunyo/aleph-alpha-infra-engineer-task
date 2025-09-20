@@ -2,11 +2,17 @@
 
 # MongoDB authentication secrets
 resource "kubernetes_secret" "mongodb_auth" {
+  for_each = {
+    database : kubernetes_namespace.database.metadata[0].name
+    app : kubernetes_namespace.application.metadata[0].name
+  }
+
+
   metadata {
-    name      = "mongodb-auth"
-    namespace = kubernetes_namespace.database.metadata[0].name
+    name      = "mongodb-auth-v2"
+    namespace = each.value
     labels = {
-      app        = "mongodb"
+      app        = each.key
       managed-by = "terraform"
     }
   }
@@ -17,28 +23,6 @@ resource "kubernetes_secret" "mongodb_auth" {
     mongodb-username = base64encode(var.mongodb_username)
     mongodb-password = base64encode(var.mongodb_password)
     mongodb-database = base64encode(var.mongodb_database)
-  }
-
-  type = "Opaque"
-}
-
-# MongoDB authentication secrets for application namespace (backend access)
-resource "kubernetes_secret" "mongodb_auth_app" {
-  metadata {
-    name      = "mongodb-auth"
-    namespace = kubernetes_namespace.application.metadata[0].name
-    labels = {
-      app        = "guestbook-backend"
-      managed-by = "terraform"
-    }
-  }
-
-  data = {
-    mongodb-root-username = base64encode(var.mongodb_root_username)
-    mongodb-root-password = base64encode(var.mongodb_root_password)
-    mongodb-username      = base64encode(var.mongodb_username)
-    mongodb-password      = base64encode(var.mongodb_password)
-    mongodb-database      = base64encode(var.mongodb_database)
   }
 
   type = "Opaque"

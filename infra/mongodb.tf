@@ -10,7 +10,7 @@ resource "helm_release" "mongodb" {
       # Authentication using existing Kubernetes Secret
       auth = {
         enabled        = true
-        existingSecret = kubernetes_secret.mongodb_auth.metadata[0].name
+        existingSecret = kubernetes_secret.mongodb_auth["database"].metadata[0].name
       }
 
       # Persistence for data
