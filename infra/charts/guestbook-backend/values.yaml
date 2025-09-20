@@ -25,13 +25,6 @@ mongodb:
   passwordKey: "mongodb-password"
   databaseKey: "mongodb-database"
 
-# Init container to wait for MongoDB
-initContainer:
-  enabled: true
-  image:
-    repository: mongo
-    tag: "4.4"
-
 resources:
   requests:
     memory: "128Mi"

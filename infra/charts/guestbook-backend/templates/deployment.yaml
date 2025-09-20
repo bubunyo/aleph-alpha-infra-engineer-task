@@ -14,15 +14,6 @@ spec:
       labels:
         {{- include "guestbook-backend.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if .Values.initContainer.enabled }}
-      initContainers:
-      - name: init-db-ready
-        image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
-        command: ['/bin/sh', '-c']
-        args:
-          - echo "Waiting for mongodb at {{ .Values.env.guestbookDbAddr }} to go live before the BE..."; 
-          - until (mongo --host {{ .Values.env.guestbookDbAddr }} >/dev/null) do echo "Waiting for connection for 2 sec."; sleep 2; done
-      {{- end }}
       containers:
         - name: backend
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
