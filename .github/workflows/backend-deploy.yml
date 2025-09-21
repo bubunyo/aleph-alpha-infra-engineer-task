@@ -81,63 +81,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Kind
-      uses: helm/kind-action@v1.8.0
-      with:
-        cluster_name: aa-cluster
-        config: |
-          kind: Cluster
-          apiVersion: kind.x-k8s.io/v1alpha4
-          containerdConfigPatches:
-          - |
-            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
-              endpoint = ["http://registry:5000"]
-          nodes:
-          - role: control-plane
-            kubeadmConfigPatches:
-            - |
-              kind: InitConfiguration
-              nodeRegistration:
-                kubeletExtraArgs:
-                  node-labels: "ingress-ready=true"
-                  
-    - name: Setup Docker Registry
+    - name: Connect to existing cluster
       run: |
-        docker run -d --restart=always -p 5000:5000 --name registry registry:2
-        docker network connect kind registry || true
-        
-    - name: Build Docker image
-      working-directory: ./src/backend
+        # Connect to the cluster created by Terraform infrastructure
+        kind get kubeconfig --name aa-cluster
+
+    - name: Build and Deploy Backend
       run: |
-        docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
-        docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
-        
-    - name: Push Docker image
-      run: |
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        
-    - name: Setup Helm
-      uses: azure/setup-helm@v3
-      with:
-        version: '3.12.0'
-        
-    - name: Deploy to Kind cluster
-      run: |
-        # Create namespace if it doesn't exist
-        kubectl create namespace application --dry-run=client -o yaml | kubectl apply -f -
-        
-        # Deploy using Helm
-        helm upgrade --install guestbook-backend ./infra/charts/guestbook-backend \
-          --namespace application \
-          --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
-          --set image.tag=${{ github.sha }} \
-          --wait --timeout=300s
-          
-    - name: Verify deployment
-      run: |
-        kubectl get pods -n application -l app.kubernetes.io/name=guestbook-backend
-        kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=guestbook-backend -n application --timeout=300s
+        chmod +x ./scripts/backend_build_deploy.sh
+        ./scripts/backend_build_deploy.sh
         
     - name: Run health checks
       run: |

@@ -41,12 +41,20 @@ Create the required `.docker_sock` file for Terraform Kind provider:
 docker context inspect --format '{{.Endpoints.docker.Host}}' > infra/.docker_sock
 ```
 
-### 2. Configure PagerDuty Integration
+### 2. Configure GitHub Secrets (Optional)
 
-Create a PagerDuty integration key and set it as a GitHub secret:
+For production deployments, configure GitHub repository secrets. If not provided, default values will be used:
 
-1. Follow the [PagerDuty Integration Guide](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/)
-2. Add the integration key as `PAGERDUTY_INTEGRATION_KEY` in GitHub repository secrets
+**Required for PagerDuty:**
+- `PAGERDUTY_INTEGRATION_KEY` - Follow the [PagerDuty Integration Guide](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/)
+
+**Optional (defaults provided):**
+- `MONGODB_ROOT_USERNAME` (default: `admin`)
+- `MONGODB_ROOT_PASSWORD` (default: `admin1234`)
+- `MONGODB_USERNAME` (default: `guestbook`)
+- `MONGODB_PASSWORD` (default: `guestbook123`)
+- `GRAFANA_ADMIN_USERNAME` (default: `admin`)
+- `GRAFANA_ADMIN_PASSWORD` (default: `admin123`)
 
 ### 3. Deploy Infrastructure
 
@@ -69,12 +77,17 @@ terraform apply -var-file="secrets.tfvars"
 ### 4. Build and Deploy Applications
 
 ```bash
-# Build all components
-./build.sh --all
+# Build all components (images will be pushed to local registry)
+./scripts/build.sh --component=all
 
-# Or build individually
-./build.sh --backend
-./build.sh --frontend
+# Or build and deploy individually
+./scripts/backend_build_deploy.sh   # Build and deploy backend
+./scripts/frontend_build_deploy.sh  # Build and deploy frontend
+
+# Build specific component without deployment
+./scripts/build.sh --component=backend    # Backend only
+./scripts/build.sh --component=frontend   # Frontend only
+./scripts/build.sh --no-test             # Skip tests
 ```
 
 ### 5. Verify Deployment
@@ -134,6 +147,44 @@ make test
 make run
 ```
 
+### Build and Deploy Scripts
+
+The project includes automated build and deploy scripts in the `scripts/` folder:
+
+**Main Build Script (`scripts/build.sh`):**
+- Unified build script for all components
+- Supports building backend, frontend, or all components
+- Configurable registry URL (default: localhost:5000)
+- Optional test execution
+- Image tagging with git SHA and latest
+- Registry verification
+
+**Component Deploy Scripts:**
+- `scripts/backend_build_deploy.sh` - Builds backend and triggers rolling deployment
+- `scripts/frontend_build_deploy.sh` - Builds frontend and triggers rolling deployment
+
+**Usage Examples:**
+```bash
+# Build all components with tests
+./scripts/build.sh --component=all
+
+# Build only backend without tests
+./scripts/build.sh --component=backend --no-test
+
+# Build and deploy backend with rolling update
+./scripts/backend_build_deploy.sh
+
+# Use custom registry
+./scripts/build.sh --component=frontend --registry=my-registry.com:5000
+```
+
+**Script Features:**
+- Automatic registry health checks
+- Docker image building and pushing
+- Kubernetes rolling deployments
+- Component verification
+- Color-coded output for better visibility
+
 ## Monitoring and Alerting
 
 ### Metrics Collection
@@ -152,6 +203,41 @@ Custom alert rules can be added in `infra/alert_rules`
 
 - **Grafana**: http://grafana.localhost
 - **Prometheus**: http://prometheus.localhost
+
+## Cluster Management
+
+### Terraform-Managed Infrastructure
+
+The entire Kubernetes cluster and infrastructure is managed by Terraform:
+
+- **Cluster Creation**: Terraform automatically creates the Kind cluster with proper configuration
+- **Registry Setup**: Docker registry is provisioned and configured for image storage
+- **Ingress Controller**: NGINX ingress is deployed automatically
+- **Monitoring Stack**: Prometheus, Grafana, and Loki are deployed via Helm charts
+- **Applications**: Backend, frontend, and MongoDB are deployed automatically
+
+### Manual Cluster Operations
+
+```bash
+# View cluster status
+kubectl cluster-info
+kubectl get nodes
+
+# Check all pods across namespaces
+kubectl get pods -A
+
+# Access cluster directly
+kind get kubeconfig --name aa-cluster
+
+# Delete cluster (if needed)
+kind delete cluster --name aa-cluster
+```
+
+### Workflow Dependencies
+
+- **Infrastructure workflow** creates and manages the cluster
+- **Application workflows** connect to the existing cluster (no manual setup required)
+- All workflows assume the cluster exists and is accessible via `aa-cluster` name
 
 ## CI/CD Workflows
 

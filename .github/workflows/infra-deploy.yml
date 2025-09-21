@@ -39,13 +39,13 @@ jobs:
     - name: Create secrets file
       run: |
         cat > infra/secrets.tfvars << EOF
-        mongodb_root_username = "admin"
-        mongodb_root_password = "admin5678"
-        mongodb_username = "guestbook"
-        mongodb_password = "guestbook123"
-        grafana_admin_username = "admin"
-        grafana_admin_password = "admin123"
-        pagerduty_integration_key = "${{ secrets.PAGERDUTY_INTEGRATION_KEY }}"
+        mongodb_root_username = "${{ secrets.MONGODB_ROOT_USERNAME || 'admin' }}"
+        mongodb_root_password = "${{ secrets.MONGODB_ROOT_PASSWORD || 'admin1234' }}"
+        mongodb_username = "${{ secrets.MONGODB_USERNAME || 'guestbook' }}"
+        mongodb_password = "${{ secrets.MONGODB_PASSWORD || 'guestbook123' }}"
+        grafana_admin_username = "${{ secrets.GRAFANA_ADMIN_USERNAME || 'admin' }}"
+        grafana_admin_password = "${{ secrets.GRAFANA_ADMIN_PASSWORD || 'admin123' }}"
+        pagerduty_integration_key = "${{ secrets.PAGERDUTY_INTEGRATION_KEY || '12345678901234567890' }}"
         EOF
     
     - name: Terraform Init
@@ -135,33 +135,6 @@ jobs:
         terraform_version: "~1.0"
         terraform_wrapper: false
         
-    - name: Setup Kind
-      uses: helm/kind-action@v1.8.0
-      with:
-        cluster_name: aa-cluster
-        config: |
-          kind: Cluster
-          apiVersion: kind.x-k8s.io/v1alpha4
-          nodes:
-          - role: control-plane
-            kubeadmConfigPatches:
-            - |
-              kind: InitConfiguration
-              nodeRegistration:
-                kubeletExtraArgs:
-                  node-labels: "ingress-ready=true"
-            extraPortMappings:
-            - containerPort: 80
-              hostPort: 80
-              protocol: TCP
-            - containerPort: 443
-              hostPort: 443
-              protocol: TCP
-              
-    - name: Setup Docker Registry
-      run: |
-        docker run -d --restart=always -p 5000:5000 --name registry registry:2
-        docker network connect kind registry || true
         
     - name: Create .docker_sock file
       run: echo "unix:///var/run/docker.sock" > infra/.docker_sock
@@ -169,13 +142,13 @@ jobs:
     - name: Create secrets file
       run: |
         cat > infra/secrets.tfvars << EOF
-        mongodb_root_username = "admin"
-        mongodb_root_password = "admin5678"
-        mongodb_username = "guestbook"
-        mongodb_password = "guestbook123"
-        grafana_admin_username = "admin"
-        grafana_admin_password = "admin123"
-        pagerduty_integration_key = "${{ secrets.PAGERDUTY_INTEGRATION_KEY }}"
+        mongodb_root_username = "${{ secrets.MONGODB_ROOT_USERNAME || 'admin' }}"
+        mongodb_root_password = "${{ secrets.MONGODB_ROOT_PASSWORD || 'admin1234' }}"
+        mongodb_username = "${{ secrets.MONGODB_USERNAME || 'guestbook' }}"
+        mongodb_password = "${{ secrets.MONGODB_PASSWORD || 'guestbook123' }}"
+        grafana_admin_username = "${{ secrets.GRAFANA_ADMIN_USERNAME || 'admin' }}"
+        grafana_admin_password = "${{ secrets.GRAFANA_ADMIN_PASSWORD || 'admin123' }}"
+        pagerduty_integration_key = "${{ secrets.PAGERDUTY_INTEGRATION_KEY || '12345678901234567890' }}"
         EOF
     
     - name: Terraform Init
