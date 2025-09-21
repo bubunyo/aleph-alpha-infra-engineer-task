@@ -1,6 +1,3 @@
-apiVersion: 1
-
-groups:
   - name: cpu-alerts
     interval: 1m
     rules:
@@ -19,7 +16,7 @@ groups:
               datasource:
                 type: prometheus
                 uid: prometheus
-              expr: avg(rate(node_cpu_seconds_total{mode!="idle"}[5m])) > 0.8
+              expr: rate(node_cpu_seconds_total{mode!="idle"}[5m]) > 0.8
               instant: false
               interval: ""
               refId: A
@@ -41,4 +38,4 @@ groups:
           description: "Average CPU usage has been above 80% for 5 minutes."
         labels:
           severity: critical
-        contactPoint: pagerduty  # <--- links this alert to the PD contact point
+        contactPoint: pagerduty

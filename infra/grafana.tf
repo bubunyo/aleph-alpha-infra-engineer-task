@@ -56,6 +56,14 @@ resource "helm_release" "grafana" {
       }
 
       alerting = {
+        "rules.yml" = {
+          apiVersion = 1
+          groups = [
+
+          ]
+
+        }
+
         "contactpoints.yaml" = {
           apiVersion = 1
           contactPoints = [
@@ -64,14 +72,14 @@ resource "helm_release" "grafana" {
               name  = "cp_1"
               receivers = [
                 {
-                  uid  = "first_uid"
+                  uid  = "pd_uid"
                   type = "pagerduty"
                   settings = {
                     integrationKey = var.pagerduty_integration_key
                     severity       = "critical"
-                    class          = "ping failure"
+                    class          = "general escalations"
                     component      = "Grafana"
-                    group          = "app-stack"
+                    group          = "kube-ecosystem-stack"
                     summary        = "{{ `{{ include \"default.message\" . }}` }}"
                   }
                 }

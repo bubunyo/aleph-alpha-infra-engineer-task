@@ -14,25 +14,21 @@ variable "registry_name" {
 variable "mongodb_root_username" {
   description = "MongoDB application root username"
   type        = string
-  default     = "admin"
 }
 variable "mongodb_root_password" {
   description = "MongoDB application root password"
   type        = string
-  default     = "admin5678"
 }
 
 variable "mongodb_username" {
   description = "MongoDB application username"
   type        = string
-  default     = "guestbook"
 }
 
 variable "mongodb_password" {
   description = "MongoDB application password"
   type        = string
   sensitive   = true
-  default     = "guestbook123"
 }
 
 variable "mongodb_database" {
@@ -60,5 +56,4 @@ variable "pagerduty_integration_key" {
   description = "PagerDuty integration key for alerts"
   type        = string
   sensitive   = true
-  default     = "abcd1234"
 }
