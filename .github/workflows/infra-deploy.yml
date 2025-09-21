@@ -65,65 +65,64 @@ jobs:
       id: plan
       working-directory: ./infra
       run: |
-        terraform plan -var-file="${TF_VAR_FILE}" -no-color -out=tfplan
-        terraform show -no-color tfplan
+        terraform plan -var-file="${TF_VAR_FILE}" -no-color -out=tfplan > plan_output.txt 2>&1
+        terraform show -no-color tfplan >> plan_output.txt 2>&1
+        echo "PLAN_OUTPUT<<EOF" >> $GITHUB_OUTPUT
+        cat plan_output.txt >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
       continue-on-error: true
       
-    - name: Comment PR - Plan Success
-      if: steps.plan.outcome == 'success'
+    - name: Comment PR - Plan Results
+      if: always() && github.event_name == 'pull_request'
       uses: actions/github-script@v7
       with:
         script: |
+          const status = '${{ steps.plan.outcome }}' === 'success' ? 'PASSED' : 'FAILED';
+          const action = '${{ steps.plan.outcome }}' === 'success' ? 'Plan generated successfully' : 'Plan generation failed';
+          
           const output = `## Terraform Plan - Infrastructure
           
-          **Status**: PASSED
-          **Action**: Plan generated successfully
+          **Status**: ${status}
+          **Action**: ${action}
           
           <details>
           <summary>Show Plan Output</summary>
           
           \`\`\`
-          ${{ steps.plan.outputs.stdout }}
+          ${{ steps.plan.outputs.PLAN_OUTPUT }}
           \`\`\`
           
-          </details>
+          </details>`;
           
-          **Next Steps**: Merge this PR to apply the infrastructure changes.`;
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
+          // Find existing comment
+          const comments = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: output
-          });
-          
-    - name: Comment PR - Plan Failed
-      if: steps.plan.outcome == 'failure'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const output = `## Terraform Plan - Infrastructure
-          
-          **Status**: FAILED
-          **Action**: Plan generation failed
-          
-          <details>
-          <summary>Show Error Output</summary>
-          
-          \`\`\`
-          ${{ steps.plan.outputs.stderr }}
-          \`\`\`
-          
-          </details>
-          
-          **Next Steps**: Review and fix the Terraform configuration errors.`;
-          
-          github.rest.issues.createComment({
             issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: output
           });
+          
+          const existingComment = comments.data.find(comment => 
+            comment.user.login === 'github-actions[bot]' && 
+            comment.body.includes('## Terraform Plan - Infrastructure')
+          );
+          
+          if (existingComment) {
+            // Update existing comment
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: output
+            });
+          } else {
+            // Create new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: output
+            });
+          }
 
   terraform-apply:
     name: Terraform Apply
