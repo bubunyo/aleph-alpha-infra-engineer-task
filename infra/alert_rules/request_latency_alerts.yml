@@ -1,0 +1,91 @@
+name: request-latency-alerts
+interval: 30s
+folder: performance_alerts
+rules:
+  - uid: backend_high_latency
+    title: "Backend High Request Latency"
+    condition: "C"
+    no_data_state: "NoData"
+    exec_err_state: "Alerting"
+    for: "2m"
+    data:
+      - refId: A
+        relativeTimeRange:
+          from: 300
+          to: 0
+        datasourceUid: prometheus
+        model:
+          datasource:
+            type: prometheus
+            uid: prometheus
+          expr: histogram_quantile(0.95, rate(guestbook_http_request_duration_seconds_bucket{service="guestbook-backend",exported_endpoint="messages"}[5m]))
+          instant: false
+          interval: ""
+          refId: A
+      - refId: B
+        datasourceUid: __expr__
+        model:
+          type: reduce
+          expression: A
+          reducer: last
+      - refId: C
+        datasourceUid: __expr__
+        model:
+          type: threshold
+          expression: B
+          conditions:
+            - evaluator:
+                type: gt
+                params: [ 2 ]
+    annotations:
+      summary: "Backend experiencing high request latency"
+      description: "95th percentile of backend request latency is above 2 seconds for more than 2 minutes."
+    labels:
+      severity: warning
+      service: backend
+      type: latency
+    contactPoint: pagerduty
+
+  - uid: frontend_high_latency
+    title: "Frontend High Request Latency"
+    condition: "C"
+    no_data_state: "NoData"
+    exec_err_state: "Alerting"
+    for: "2m"
+    data:
+      - refId: A
+        relativeTimeRange:
+          from: 300
+          to: 0
+        datasourceUid: prometheus
+        model:
+          datasource:
+            type: prometheus
+            uid: prometheus
+          expr: histogram_quantile(0.95, rate(guestbook_frontend_http_request_duration_seconds_bucket{service="guestbook-frontend",exported_endpoint="home"}[5m]))
+          instant: false
+          interval: ""
+          refId: A
+      - refId: B
+        datasourceUid: __expr__
+        model:
+          type: reduce
+          expression: A
+          reducer: last
+      - refId: C
+        datasourceUid: __expr__
+        model:
+          type: threshold
+          expression: B
+          conditions:
+            - evaluator:
+                type: gt
+                params: [ 1 ]
+    annotations:
+      summary: "Frontend experiencing high request latency"
+      description: "95th percentile of frontend request latency is above 1 second for more than 2 minutes."
+    labels:
+      severity: warning
+      service: frontend
+      type: latency
+    contactPoint: pagerduty

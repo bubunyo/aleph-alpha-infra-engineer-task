@@ -1,0 +1,91 @@
+name: error-rate-alerts
+interval: 30s
+folder: error_alerts
+rules:
+  - uid: backend_high_error_rate
+    title: "Backend High Error Rate"
+    condition: "C"
+    no_data_state: "NoData"
+    exec_err_state: "Alerting"
+    for: "2m"
+    data:
+      - refId: A
+        relativeTimeRange:
+          from: 300
+          to: 0
+        datasourceUid: prometheus
+        model:
+          datasource:
+            type: prometheus
+            uid: prometheus
+          expr: (rate(guestbook_http_requests_total{status=~"5.*",service="guestbook-backend"}[5m]) / rate(guestbook_http_requests_total{service="guestbook-backend"}[5m])) * 100
+          instant: false
+          interval: ""
+          refId: A
+      - refId: B
+        datasourceUid: __expr__
+        model:
+          type: reduce
+          expression: A
+          reducer: last
+      - refId: C
+        datasourceUid: __expr__
+        model:
+          type: threshold
+          expression: B
+          conditions:
+            - evaluator:
+                type: gt
+                params: [ 5 ]
+    annotations:
+      summary: "Backend experiencing high error rate"
+      description: "Backend 5xx error rate is above 5% for more than 2 minutes."
+    labels:
+      severity: critical
+      service: backend
+      type: error_rate
+    contactPoint: pagerduty
+
+  - uid: frontend_high_error_rate
+    title: "Frontend High Error Rate"
+    condition: "C"
+    no_data_state: "NoData"
+    exec_err_state: "Alerting"
+    for: "2m"
+    data:
+      - refId: A
+        relativeTimeRange:
+          from: 300
+          to: 0
+        datasourceUid: prometheus
+        model:
+          datasource:
+            type: prometheus
+            uid: prometheus
+          expr: (rate(guestbook_frontend_http_requests_total{status=~"5.*",service="guestbook-frontend"}[5m]) / rate(guestbook_frontend_http_requests_total{service="guestbook-frontend"}[5m])) * 100
+          instant: false
+          interval: ""
+          refId: A
+      - refId: B
+        datasourceUid: __expr__
+        model:
+          type: reduce
+          expression: A
+          reducer: last
+      - refId: C
+        datasourceUid: __expr__
+        model:
+          type: threshold
+          expression: B
+          conditions:
+            - evaluator:
+                type: gt
+                params: [ 5 ]
+    annotations:
+      summary: "Frontend experiencing high error rate"
+      description: "Frontend 5xx error rate is above 5% for more than 2 minutes."
+    labels:
+      severity: warning
+      service: frontend
+      type: error_rate
+    contactPoint: pagerduty

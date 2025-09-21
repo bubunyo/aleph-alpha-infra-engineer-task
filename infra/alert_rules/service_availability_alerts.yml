@@ -1,0 +1,89 @@
+name: service-availability-alerts
+interval: 30s
+folder: service_alerts
+rules:
+  - uid: backend_service_down
+    title: "Backend Service Down"
+    condition: "C"
+    no_data_state: "NoData"
+    exec_err_state: "Alerting"
+    for: "1m"
+    data:
+      - refId: A
+        relativeTimeRange:
+          from: 300
+          to: 0
+        datasourceUid: prometheus
+        model:
+          datasource:
+            type: prometheus
+            uid: prometheus
+          expr: up{service="guestbook-backend"}
+          instant: false
+          interval: ""
+          refId: A
+      - refId: B
+        datasourceUid: __expr__
+        model:
+          type: reduce
+          expression: A
+          reducer: last
+      - refId: C
+        datasourceUid: __expr__
+        model:
+          type: threshold
+          expression: B
+          conditions:
+            - evaluator:
+                type: lt
+                params: [ 1 ]
+    annotations:
+      summary: "Backend service is down"
+      description: "The guestbook backend service has been unavailable for more than 1 minute."
+    labels:
+      severity: critical
+      service: backend
+    contactPoint: pagerduty
+
+  - uid: frontend_service_down
+    title: "Frontend Service Down"
+    condition: "C"
+    no_data_state: "NoData"
+    exec_err_state: "Alerting"
+    for: "1m"
+    data:
+      - refId: A
+        relativeTimeRange:
+          from: 300
+          to: 0
+        datasourceUid: prometheus
+        model:
+          datasource:
+            type: prometheus
+            uid: prometheus
+          expr: up{service="guestbook-frontend"}
+          instant: false
+          interval: ""
+          refId: A
+      - refId: B
+        datasourceUid: __expr__
+        model:
+          type: reduce
+          expression: A
+          reducer: last
+      - refId: C
+        datasourceUid: __expr__
+        model:
+          type: threshold
+          expression: B
+          conditions:
+            - evaluator:
+                type: lt
+                params: [ 1 ]
+    annotations:
+      summary: "Frontend service is down"
+      description: "The guestbook frontend service has been unavailable for more than 1 minute."
+    labels:
+      severity: critical
+      service: frontend
+    contactPoint: pagerduty

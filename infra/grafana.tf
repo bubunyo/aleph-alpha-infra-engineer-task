@@ -44,12 +44,14 @@ resource "helm_release" "grafana" {
               url       = "http://prometheus-kube-prometheus-prometheus.${kubernetes_namespace.monitoring.metadata[0].name}.svc.cluster.local:9090"
               access    = "proxy"
               isDefault = true
+              uid       = "prometheus"
             },
             {
               name   = "Loki"
               type   = "loki"
               url    = "http://loki.${kubernetes_namespace.logging.metadata[0].name}.svc.cluster.local:3100"
               access = "proxy"
+              uid    = "loki"
             }
           ]
         }
@@ -58,10 +60,10 @@ resource "helm_release" "grafana" {
       alerting = {
         "rules.yml" = {
           apiVersion = 1
-          groups = [
-
+          groups     = [
+            for file in fileset("${path.module}/alert_rules", "*.{yml,yaml}") :
+            yamldecode(file("${path.module}/alert_rules/${file}"))
           ]
-
         }
 
         "contactpoints.yaml" = {
@@ -69,7 +71,7 @@ resource "helm_release" "grafana" {
           contactPoints = [
             {
               orgId = 1
-              name  = "cp_1"
+              name  = "pagerduty"
               receivers = [
                 {
                   uid  = "pd_uid"
