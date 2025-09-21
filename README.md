@@ -33,64 +33,75 @@ This repository contains a complete infrastructure-as-code solution for deployin
 
 ## Quick Start
 
-### 1. Generate Docker Socket File
+### 1. Change into infrastructure working directory
+
+```bash
+cd infra
+```
+
+### 2. Generate Docker Socket File
 
 Create the required `.docker_sock` file for Terraform Kind provider:
 
 ```bash
-docker context inspect --format '{{.Endpoints.docker.Host}}' > infra/.docker_sock
+docker context inspect --format '{{.Endpoints.docker.Host}}' > .docker_sock
 ```
 
-### 2. Configure GitHub Secrets (Optional)
 
-For production deployments, configure GitHub repository secrets. If not provided, default values will be used:
+### 3. Generate Secret Variables 
 
-**Required for PagerDuty:**
-- `PAGERDUTY_INTEGRATION_KEY` - Follow the [PagerDuty Integration Guide](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/)
-
-**Optional (defaults provided):**
-- `MONGODB_ROOT_USERNAME` (default: `admin`)
-- `MONGODB_ROOT_PASSWORD` (default: `admin1234`)
-- `MONGODB_USERNAME` (default: `guestbook`)
-- `MONGODB_PASSWORD` (default: `guestbook123`)
-- `GRAFANA_ADMIN_USERNAME` (default: `admin`)
-- `GRAFANA_ADMIN_PASSWORD` (default: `admin123`)
-
-### 3. Deploy Infrastructure
+Create the `secrets.tfvars` file and replace variables with the appropriate values
 
 ```bash
-# Navigate to infrastructure directory
-cd infra
-
-# Initialize Terraform
-terraform init
-
-# Create secrets file by copying the example and filling in values
+# Generate the secrets.tfvars file
 cp secrets.tfvars.example secrets.tfvars
-# Edit secrets.tfvars with your actual values
-
-# Plan and apply
-terraform plan -var-file="secrets.tfvars"
-terraform apply -var-file="secrets.tfvars"
 ```
 
-### 4. Build and Deploy Applications
+### 4. Initialize the terraform project 
+
+```bash
+# Initialize Terraform
+terraform init
+```
+
+### 5. Deploy the Local Registry
+
+```bash
+terraform apply -var-file="secrets.tfvars" -target=docker_container.registry -auto-approve
+```
+
+### 6. Deploy the Local Kind Cluster
+
+```bash
+terraform apply -var-file="secrets.tfvars" -target=kind_cluster.default -auto-approve
+```
+
+### 7. Change directories into the project working directories
+
+```bash
+cd ..
+```
+
+### 8. Build and Push Application Images to Local Registery
 
 ```bash
 # Build all components (images will be pushed to local registry)
-./scripts/build.sh --component=all
-
-# Or build and deploy individually
-./scripts/backend_build_deploy.sh   # Build and deploy backend
-./scripts/frontend_build_deploy.sh  # Build and deploy frontend
-
-# Build specific component without deployment
-./scripts/build.sh --component=backend    # Backend only
-./scripts/build.sh --component=frontend   # Frontend only
-./scripts/build.sh --no-test             # Skip tests
+./scripts/build.sh --component=all --no-test
 ```
 
-### 5. Verify Deployment
+### 9. Change directories back into the infra project  
+
+```bash
+cd infra
+```
+
+### 10. Deploy Rest of Infrastructure 
+
+```bash
+terraform apply -var-file="secrets.tfvars" -auto-approve
+```
+
+### 11. Verify Deployment
 
 ```bash
 # Check all pods are running
@@ -100,7 +111,7 @@ kubectl get pods -A
 kubectl get svc -A
 
 # Test application endpoints
-curl -f http://frontend.localhost/health
+curl -f http://localhost/health
 curl -f http://grafana.localhost/api/health
 ```
 
@@ -163,28 +174,6 @@ The project includes automated build and deploy scripts in the `scripts/` folder
 - `scripts/backend_build_deploy.sh` - Builds backend and triggers rolling deployment
 - `scripts/frontend_build_deploy.sh` - Builds frontend and triggers rolling deployment
 
-**Usage Examples:**
-```bash
-# Build all components with tests
-./scripts/build.sh --component=all
-
-# Build only backend without tests
-./scripts/build.sh --component=backend --no-test
-
-# Build and deploy backend with rolling update
-./scripts/backend_build_deploy.sh
-
-# Use custom registry
-./scripts/build.sh --component=frontend --registry=my-registry.com:5000
-```
-
-**Script Features:**
-- Automatic registry health checks
-- Docker image building and pushing
-- Kubernetes rolling deployments
-- Component verification
-- Color-coded output for better visibility
-
 ## Monitoring and Alerting
 
 ### Metrics Collection
@@ -199,10 +188,6 @@ Both applications expose Prometheus metrics including:
 
 Custom alert rules can be added in `infra/alert_rules`
 
-### Access Monitoring
-
-- **Grafana**: http://grafana.localhost
-- **Prometheus**: http://prometheus.localhost
 
 ## Cluster Management
 
