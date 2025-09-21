@@ -1,0 +1,206 @@
+name: Infrastructure Deployment
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'infra/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'infra/**'
+
+env:
+  TF_VAR_FILE: secrets.tfvars
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    outputs:
+      plan_output: ${{ steps.plan.outputs.stdout }}
+      plan_success: ${{ steps.plan.outcome }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "~1.0"
+        terraform_wrapper: false
+        
+    - name: Create .docker_sock file
+      run: echo "unix:///var/run/docker.sock" > infra/.docker_sock
+      
+    - name: Create secrets file
+      run: |
+        cat > infra/secrets.tfvars << EOF
+        mongodb_root_username = "admin"
+        mongodb_root_password = "admin5678"
+        mongodb_username = "guestbook"
+        mongodb_password = "guestbook123"
+        grafana_admin_username = "admin"
+        grafana_admin_password = "admin123"
+        pagerduty_integration_key = "${{ secrets.PAGERDUTY_INTEGRATION_KEY }}"
+        EOF
+    
+    - name: Terraform Init
+      working-directory: ./infra
+      run: terraform init
+      
+    - name: Terraform Validate
+      working-directory: ./infra
+      run: terraform validate
+      
+    - name: Terraform Plan
+      id: plan
+      working-directory: ./infra
+      run: |
+        terraform plan -var-file="${TF_VAR_FILE}" -no-color -out=tfplan
+        terraform show -no-color tfplan
+      continue-on-error: true
+      
+    - name: Comment PR - Plan Success
+      if: steps.plan.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const output = `## Terraform Plan - Infrastructure
+          
+          **Status**: PASSED
+          **Action**: Plan generated successfully
+          
+          <details>
+          <summary>Show Plan Output</summary>
+          
+          \`\`\`
+          ${{ steps.plan.outputs.stdout }}
+          \`\`\`
+          
+          </details>
+          
+          **Next Steps**: Merge this PR to apply the infrastructure changes.`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          });
+          
+    - name: Comment PR - Plan Failed
+      if: steps.plan.outcome == 'failure'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const output = `## Terraform Plan - Infrastructure
+          
+          **Status**: FAILED
+          **Action**: Plan generation failed
+          
+          <details>
+          <summary>Show Error Output</summary>
+          
+          \`\`\`
+          ${{ steps.plan.outputs.stderr }}
+          \`\`\`
+          
+          </details>
+          
+          **Next Steps**: Review and fix the Terraform configuration errors.`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          });
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "~1.0"
+        terraform_wrapper: false
+        
+    - name: Setup Kind
+      uses: helm/kind-action@v1.8.0
+      with:
+        cluster_name: aa-cluster
+        config: |
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+          - role: control-plane
+            kubeadmConfigPatches:
+            - |
+              kind: InitConfiguration
+              nodeRegistration:
+                kubeletExtraArgs:
+                  node-labels: "ingress-ready=true"
+            extraPortMappings:
+            - containerPort: 80
+              hostPort: 80
+              protocol: TCP
+            - containerPort: 443
+              hostPort: 443
+              protocol: TCP
+              
+    - name: Setup Docker Registry
+      run: |
+        docker run -d --restart=always -p 5000:5000 --name registry registry:2
+        docker network connect kind registry || true
+        
+    - name: Create .docker_sock file
+      run: echo "unix:///var/run/docker.sock" > infra/.docker_sock
+      
+    - name: Create secrets file
+      run: |
+        cat > infra/secrets.tfvars << EOF
+        mongodb_root_username = "admin"
+        mongodb_root_password = "admin5678"
+        mongodb_username = "guestbook"
+        mongodb_password = "guestbook123"
+        grafana_admin_username = "admin"
+        grafana_admin_password = "admin123"
+        pagerduty_integration_key = "${{ secrets.PAGERDUTY_INTEGRATION_KEY }}"
+        EOF
+    
+    - name: Terraform Init
+      working-directory: ./infra
+      run: terraform init
+      
+    - name: Terraform Apply
+      working-directory: ./infra
+      run: terraform apply -var-file="${TF_VAR_FILE}" -auto-approve
+      
+    - name: Verify Deployment
+      run: |
+        kubectl get pods -A
+        kubectl get svc -A
+        kubectl get ingress -A
+        
+    - name: Create Deployment Summary
+      run: |
+        echo "## Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "**Status**: SUCCESS" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp**: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Deployed Components" >> $GITHUB_STEP_SUMMARY
+        echo "- Kind Cluster: aa-cluster" >> $GITHUB_STEP_SUMMARY
+        echo "- Monitoring Stack: Prometheus, Grafana, Loki" >> $GITHUB_STEP_SUMMARY
+        echo "- Applications: MongoDB, Backend, Frontend" >> $GITHUB_STEP_SUMMARY
+        echo "- Alerting: 7 alert rules with PagerDuty integration" >> $GITHUB_STEP_SUMMARY
