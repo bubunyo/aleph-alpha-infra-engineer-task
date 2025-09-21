@@ -16,6 +16,9 @@ resource "helm_release" "grafana" {
         size    = "5Gi"
       }
 
+      initChownData = {
+        enabled = false
+      }
 
       # Admin credentials using Kubernetes Secret
       admin = {
@@ -52,23 +55,69 @@ resource "helm_release" "grafana" {
         }
       }
 
-      # Basic dashboards
-      dashboardProviders = {
-        "dashboardproviders.yaml" = {
+      alerting = {
+        "contactpoints.yaml" = {
           apiVersion = 1
-          providers = [
-            #             {
-            #               name            = "default"
-            #               orgId           = 1
-            #               folder          = ""
-            #               type            = "file"
-            #               disableDeletion = false
-            #               editable        = true
-            #               options = {
-            #                 path = "/var/lib/grafana/dashboards/default"
-            #               }
-            #             }
+          contactPoints = [
+            {
+              orgId = 1
+              name  = "cp_1"
+              receivers = [
+                {
+                  uid  = "first_uid"
+                  type = "pagerduty"
+                  settings = {
+                    integrationKey = var.pagerduty_integration_key
+                    severity       = "critical"
+                    class          = "ping failure"
+                    component      = "Grafana"
+                    group          = "app-stack"
+                    summary        = "{{ `{{ include \"default.message\" . }}` }}"
+                  }
+                }
+              ]
+            }
           ]
+        }
+        # Notification Policies
+        "policies.yml" = {
+          apiVersion = 1
+          policies = [
+            {
+              orgId           = 1
+              receiver        = "pagerduty"
+              group_by        = ["grafana_folder", "alertname"]
+              group_wait      = "10s"
+              group_interval  = "10s"
+              repeat_interval = "12h"
+              routes = [
+                {
+                  receiver = "pagerduty"
+                  object_matchers = [
+                    ["severity", "=", "critical"]
+                  ]
+                  continue = false
+                },
+                {
+                  receiver = "pagerduty"
+                  object_matchers = [
+                    ["severity", "=", "warning"]
+                  ]
+                  group_wait      = "30s"
+                  repeat_interval = "24h"
+                  continue        = false
+                }
+              ]
+            }
+          ]
+        }
+      }
+
+
+      # Unified Alerting Configuration
+      "grafana.ini" = {
+        unified_alerting = {
+          enabled = true
         }
       }
 

@@ -30,7 +30,7 @@ resource "helm_release" "prometheus" {
         }
       }
       alertmanager = {
-        enabled = false
+        enabled = false  # Disabled - using Grafana unified alerting instead
       }
     })
   ]
@@ -84,3 +84,5 @@ resource "kubernetes_ingress_v1" "prometheus" {
     helm_release.prometheus
   ]
 }
+
+# AlertManager ingress removed - using Grafana unified alerting instead

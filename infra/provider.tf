@@ -33,6 +33,10 @@ terraform {
       source  = "hashicorp/http"
       version = "3.5.0"
     }
+    grafana = {
+      source  = "grafana/grafana"
+      version = "~> 3.7"
+    }
   }
 }
 
@@ -155,6 +159,15 @@ provider "helm" {
     client_key             = kind_cluster.default.client_key
     cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate
   }
+}
+
+# Grafana provider configuration
+provider "grafana" {
+  url = "http://grafana.localhost"
+  auth = "${var.grafana_admin_username}:${var.grafana_admin_password}"
+
+  #   Wait for Grafana to be ready before creating resources
+  retry_wait = 30
 }
 
 

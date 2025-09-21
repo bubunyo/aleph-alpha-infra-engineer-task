@@ -54,3 +54,11 @@ variable "grafana_admin_password" {
   sensitive   = true
   default     = "admin123"
 }
+
+# PagerDuty alerting configuration
+variable "pagerduty_integration_key" {
+  description = "PagerDuty integration key for alerts"
+  type        = string
+  sensitive   = true
+  default     = "abcd1234"
+}

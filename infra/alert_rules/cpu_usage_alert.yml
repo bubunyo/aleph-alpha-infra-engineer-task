@@ -1,0 +1,44 @@
+apiVersion: 1
+
+groups:
+  - name: cpu-alerts
+    interval: 1m
+    rules:
+      - uid: high_cpu
+        title: "High CPU Usage"
+        condition: "B"
+        no_data_state: "NoData"
+        exec_err_state: "Alerting"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              expr: avg(rate(node_cpu_seconds_total{mode!="idle"}[5m])) > 0.8
+              instant: false
+              interval: ""
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0.8]
+                  operator:
+                    type: and
+                  reducer:
+                    type: avg
+        annotations:
+          summary: "High CPU usage detected"
+          description: "Average CPU usage has been above 80% for 5 minutes."
+        labels:
+          severity: critical
+        contactPoint: pagerduty  # <--- links this alert to the PD contact point
