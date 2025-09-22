@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Unified build script for guestbook components
-# Usage: ./build.sh [--component=backend|frontend|all] [--registry=localhost:5000] [--no-test] [--help]
+# Usage: ./build.sh [--component=backend|frontend|all] [--registry=127.0.0.1:5000] [--no-test] [--help]
 
 set -e  # Exit on any error
 
 # Default configuration
 COMPONENT="all"
-LOCAL_REGISTRY="localhost:5000"
+LOCAL_REGISTRY="127.0.0.1:5000"
 RUN_TESTS=true
 GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
@@ -45,7 +45,7 @@ show_usage() {
     echo ""
     echo "Options:"
     echo "  --component=COMP    Component to build: backend, frontend, or all (default: all)"
-    echo "  --registry=URL      Container registry URL (default: localhost:5000)"
+    echo "  --registry=URL      Container registry URL (default: 127.0.0.1:5000)"
     echo "  --no-test          Skip running tests"
     echo "  --help             Show this help message"
     echo ""
